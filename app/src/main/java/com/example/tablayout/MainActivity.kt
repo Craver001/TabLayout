@@ -8,7 +8,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 
 class MainActivity : AppCompatActivity() {
 
-    val tabArray= arrayOf("Library Books","Search","Buy Books")
+    val tabArray= arrayOf("Library Books","Search","Cart")
 
 
     override fun onCreate(savedInstanceState: Bundle?) {

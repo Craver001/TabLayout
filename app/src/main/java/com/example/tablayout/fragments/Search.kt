@@ -1,60 +1,81 @@
 package com.example.tablayout.fragments
 
 import android.os.Bundle
+import android.view.*
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.widget.SearchView
+import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.tablayout.R
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [Search.newInstance] factory method to
- * create an instance of this fragment.
- */
 class Search : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+
+    private lateinit var searchView: SearchView
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var myAdapter: LibraryViewModel
+    private lateinit var bookList: BookList
+    private lateinit var allBooks: List<LibraryBookClass>
+    private lateinit var filteredBooks: List<LibraryBookClass>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
+        setHasOptionsMenu(true) // enable options menu in this fragment
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_search, container, false)
+        val view = inflater.inflate(R.layout.fragment_search, container, false)
+        searchView = view.findViewById(R.id.searchView)
+        recyclerView = view.findViewById(R.id.recyclerView)
+
+
+        return view
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment Search.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            Search().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        bookList = BookList()
+        allBooks = bookList.bookList
+        filteredBooks = allBooks // initialize filteredBooks with all books
+        myAdapter = LibraryViewModel(filteredBooks)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.adapter = myAdapter
+        setupSearchView()
     }
+
+    private fun setupSearchView() {
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String): Boolean {
+                filteredBooks = if (newText.isEmpty()) {
+                    // If the search query is empty, show all books
+                    allBooks
+                } else {
+                    // Otherwise, filter the books based on the query
+                    allBooks.filter { book -> book.bookName.contains(newText, ignoreCase = true) }
+                }
+                myAdapter = LibraryViewModel(filteredBooks)
+                recyclerView.adapter = myAdapter
+
+                // Show/hide the error message depending on whether any books were found
+                if (filteredBooks.isEmpty()) {
+                    recyclerView.visibility = View.GONE
+                    view?.findViewById<TextView>(R.id.tv_no_books_found)?.visibility = View.VISIBLE
+                } else {
+                    recyclerView.visibility = View.VISIBLE
+                    view?.findViewById<TextView>(R.id.tv_no_books_found)?.visibility = View.GONE
+                }
+                return true
+            }
+        })
+    }
+
 }
